@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="container">
+    <div class="page-header">
+        <h1>
+            Francine's Personal Interests
+        </h1>
+    </div>
+
+{% block subtext %}
+@{{ screen_name }}
+{% endblock %}
+
+{% block body2 %}
+{{ chart | safe }}
+{% endblock %}
+
+{% endblock %}
+
+

@@ -1,0 +1,98 @@
+from flask import Flask, redirect, render_template, request, url_for
+
+import os
+import sys
+import helpers
+from analyzer import Analyzer
+
+app = Flask(__name__)
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/search")
+def search():
+
+    # validate screen_name
+    screen_name = request.args.get("screen_name", "")
+    if not screen_name:
+        return redirect(url_for("index"))
+
+    # get screen_name's tweets
+    tweets = helpers.get_user_timeline(screen_name)
+    if not tweets:
+        return redirect(url_for("index"))
+
+    # absolute paths to lists
+    positives = os.path.join(sys.path[0], "positive-words.txt")
+    negatives = os.path.join(sys.path[0], "negative-words.txt")
+    classics = os.path.join(sys.path[0], "classics-words.txt")
+    arthistory = os.path.join(sys.path[0], "arthistory-words.txt")
+    tech = os.path.join(sys.path[0], "tech-words.txt")
+
+    # instantiate analyzer
+    analyzer = Analyzer(positives, negatives, classics, arthistory, tech)
+
+    # initialise positive, negative, neutral counters
+    positive, negative, neutral = 0.0, 0.0, 0.0
+
+    # loop through tweets list to analyse it, adding to counter
+    for tweet in tweets:
+        score = analyzer.analyze(tweet)
+        if score > 0.0:
+            positive += 1
+        elif score < 0.0:
+            negative += 1
+        else:
+            neutral += 1
+
+    # generate chart
+    chart = helpers.chart(positive, negative, neutral)
+
+    # render results
+    return render_template("search.html", chart=chart, screen_name=screen_name)
+
+@app.route("/search2")
+def search2():
+
+    # validate screen_name
+    screen_name = request.args.get("screen_name", "")
+    if not screen_name:
+        return redirect(url_for("index"))
+
+    # get screen_name's tweets
+    tweets = helpers.get_user_timeline(screen_name)
+    if not tweets:
+        return redirect(url_for("index"))
+
+    # absolute paths to lists
+    positives = os.path.join(sys.path[0], "positive-words.txt")
+    negatives = os.path.join(sys.path[0], "negative-words.txt")
+    classics = os.path.join(sys.path[0], "classics-words.txt")
+    arthistory = os.path.join(sys.path[0], "arthistory-words.txt")
+    tech = os.path.join(sys.path[0], "tech-words.txt")
+
+    # instantiate analyzer
+    analyzer = Analyzer(positives, negatives, classics, arthistory, tech)
+
+    # initialise classics, arthistory, tech, neutral counters
+    classics, arthistory, tech, neutral = 0.0, 0.0, 0.0, 0.0
+
+    # loop through tweets list to analyse it, adding to counter
+    for tweet in tweets:
+        interest = analyzer.analyze2(tweet)
+        if interest == 'classics':
+            classics += 1
+        elif interest == 'arthistory':
+            arthistory += 1
+        elif interest == 'tech':
+            tech += 1
+        else:
+            neutral += 1
+
+    # generate chart
+    chart = helpers.chart2(classics, arthistory, tech, neutral)
+
+    # render results
+    return render_template("search2.html", chart=chart, screen_name=screen_name)
